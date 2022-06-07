@@ -1,22 +1,18 @@
 const { request } = require('express');
 const express = require('express');
 const { ObjectId } = require('mongodb');
+
+const cors = require('cors');
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
-app.use((req, res, next) => {
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.header("Access-Control-Allow-Headers", "*");
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header('Access-Control-Allow-Methods', '*');
-    next();
-})
 app.use((req, res, next) => {
     console.log(req.url);
     next()
 })
+
 const MongoClient = require('mongodb').MongoClient;
 
 let db;
