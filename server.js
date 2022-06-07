@@ -1,7 +1,7 @@
-const { request } = require('express');
 const express = require('express');
-const { ObjectId } = require('mongodb');
-
+const mongodb = require('mongodb');
+const path = require('path')
+const fs = require('fs')
 const cors = require('cors');
 const app = express();
 
@@ -23,7 +23,7 @@ MongoClient.connect("mongodb+srv://DarkShadow:123123Merry@cw2.gnjxocm.mongodb.ne
     })
 
 app.get('/', (req, res, next) => {
-    res.send("welcome to backend");
+    res.send("Hello User");
 })
 
 app.param('collectionName', (req, res, next, collectionName) => {
@@ -69,6 +69,39 @@ app.put('/collection/:collectionName/:id', (req, res, next) => {
             res.send(result.modifiedCount === 1 ? { msg: 'success' } : { msg: 'error' })
         })
     console.log(req.body)
+})
+
+// search
+app.get('/collection/:collectionName/search', (req, res, next) => {
+    let query_str = req.query.key_word
+    req.collection.find({}).toArray((e, results) => {
+        if (e) return next(e)
+        let newList = results.filter((lesson) => {
+            return lesson.subject.toLowerCase().match(query_str) || lesson.location.toLowerCase().match(query_str)
+        });
+        res.send(newList)
+    })
+})
+
+app.use(function(req, res, next){
+    var filePath = path.join(__dirname, "static", req.url)
+    fs.stat(filePath, function(err, fileInfo){
+        if (err) {
+            next()
+            return
+        }
+        if (fileInfo.isFile()) {
+            res.sendFile(filePath)
+        }
+        else{
+            next()
+        }
+    })
+})
+
+app.use(function(req, res){
+    res.status(404)
+    res.send("file not found")
 })
 
 app.listen(process.env.PORT || 3000,()=> {
