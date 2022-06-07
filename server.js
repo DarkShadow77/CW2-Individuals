@@ -1,20 +1,40 @@
-const express = require('express');
-const mongodb = require('mongodb');
-const path = require('path')
-const fs = require('fs')
-const cors = require('cors');
-const app = express();
+const express = require('express')
+const app = express()
+const cors = require('cors')
 
-app.use(express.json());
-app.use(cors());
+// REQUIRED MODULES FOR STATIC FILE
+var path = require("path")
+var fs = require("fs")
 
-app.use((req, res, next) => {
-    console.log(req.url);
-    next()
-})
+app.use(express.json())
+app.use (cors())
+
+
+// LOGGER MIDDLEWARE
+app.use(function (req, res, next) {
+    console.log("Request URL: " + req.url);
+    console.log("Request Date: " + new Date());
+    next();
+});
+
+// STATIC FILE SERVER MIDDLEWARE
+app.use(function (req, res, next) {
+    // Uses path.join to find the path where the file should be
+    var filePath = path.join(__dirname, "images", req.url);
+    // Built-in fs.stat gets info about a file
+    fs.stat(filePath, function (err, fileInfo) {
+        if (err) {
+            next();
+            return;
+        }
+        if (fileInfo.isFile()) res.sendFile(filePath);
+        else next();
+    });
+});
 
 const MongoClient = require('mongodb').MongoClient;
 
+//SELECT DATABASE
 let db;
 MongoClient.connect("mongodb+srv://DarkShadow:123123Merry@cw2.gnjxocm.mongodb.net/test"
     , (err, client) => {
@@ -22,53 +42,59 @@ MongoClient.connect("mongodb+srv://DarkShadow:123123Merry@cw2.gnjxocm.mongodb.ne
         console.log("database connected");
     })
 
-app.get('/', (req, res, next) => {
-    res.send("Hello User");
-})
 
+//SELECT COLLECTION
 app.param('collectionName', (req, res, next, collectionName) => {
     req.collection = db.collection(collectionName)
     return next()
 })
 
-app.get('/collection/:collectionName', (req, res, next) => {
-    req.collection.find({}).toArray((e, results) => {
-        if (e) return next(e)
+//DISPLAY A MESSAGE FOR ROOT PATH TO SHOW THAT API IS WORKING
+app.get('/', (req, res, next) => {
+    res.send('Select a collection, e.g., /collection/messages')
+})
+
+//RETRIEVE ALL THE OBJECTS FROM A COLLECTION
+app.get('/collection/:collectionName', (req, res) => {
+    req.collection.find({}).toArray((error, results) => {
+        if (error) return next(error)
         res.send(results)
     })
 })
 
-app.post('/collection/:collectionName', (req, res, next) => {
-    req.collection.insert(req.body, (e, results) => {
-        if (e) return next(e)
-        let response = { "message": "success" }
-        res.send(response);
-    })
-})
-
-const ObjectID = require('mongodb').ObjectID;
-
+//RETIREVE AN OBJECT BY MONGODB ID
+const ObjectID = require('mongodb').ObjectId;
 app.get('/collection/:collectionName/:id', (req, res, next) => {
-    req.collection.findOne({ _id: new ObjectID(req.params.id) }, (e, result) => {
-        if (e) return next(e)
-        res.send(result)
+    req.collection.findOne(
+        { _id: new ObjectID(req.params.id) },
+        (error, result) => {
+            if (error) return next(error)
+            res.send(result)
+        })
+})
+
+//ADD AN OBJECT
+app.post('/collection/:collectionName', (req, res, next) => {
+    req.collection.insertOne(req.body, (error, results) => {
+        if (error) return next(error)
+        let response = { "message": "success" }
+        res.send(results.ops)
     })
 })
 
 
-//update an object 
-
+//UPDATE AN OBJECT BY ID
 app.put('/collection/:collectionName/:id', (req, res, next) => {
-    let id = new ObjectId(req.params.id)
-    req.collection.update(
-        { _id: id },
-        { $set: req.body },
-        { safe: true, multi: false },
-        (e, result) => {
-            if (e) return next(e)
-            res.send(result.modifiedCount === 1 ? { msg: 'success' } : { msg: 'error' })
+    req.collection.updateOne(
+        {_id: new ObjectID(req.params.id)},
+        {$set: req.body},
+        {safe: true, multi: false},
+        (error, result) => {
+            if (error) return next(error)
+            res.send((result.result.n === 1) ?
+                {msg: 'success'} : { msg: 'error'})
         })
-    console.log(req.body)
+        console.log(req.body)
 })
 
 // search
@@ -83,26 +109,12 @@ app.get('/collection/:collectionName/search', (req, res, next) => {
     })
 })
 
-app.use(function(req, res, next){
-    var filePath = path.join(__dirname, "static", req.url)
-    fs.stat(filePath, function(err, fileInfo){
-        if (err) {
-            next()
-            return
-        }
-        if (fileInfo.isFile()) {
-            res.sendFile(filePath)
-        }
-        else{
-            next()
-        }
-    })
-})
-
-app.use(function(req, res){
-    res.status(404)
-    res.send("file not found")
-})
+app.use(function (req, res) {
+    // Sets the status code to 404
+    res.status(404);
+    // Sends the error "File not found!”
+    res.send("File not found!");
+});
 
 app.listen(process.env.PORT || 3000,()=> {
     console.log("app running");
