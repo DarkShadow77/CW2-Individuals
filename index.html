@@ -136,7 +136,7 @@
                 }
             },
             async created() {
-                let course = await fetch("https://individual2cw.herokuapp.com/collection/lesson")
+                let course = await fetch("https://cw2-individuals.herokuapp.com/collection/lesson")
                 let result = await course.json()
                 this.lessons = result
             },
@@ -161,7 +161,7 @@
                         cartProduct: this.cart,
                     }
 
-                    fetch('https://individual2cw.herokuapp.com/collection/order', {
+                    fetch('https://cw2-individuals.herokuapp.com/collection/order ', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
