@@ -157,7 +157,7 @@
                 }
             },
             async created() {
-                let course = await fetch("https://individualcw.herokuapp.com/collection/lesson")
+                let course = await fetch("https://cw2-individuals.herokuapp.com/collection/lessons")
                 let result = await course.json()
                 this.lessons = result
             },
@@ -227,7 +227,7 @@
                         cartProduct: this.cart,
                     }
 
-                    fetch('https://individualcw.herokuapp.com/collection/order', {
+                    fetch('https://cw2-individuals.herokuapp.com/collection/order', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -251,7 +251,7 @@
 
                         for (let j = 0; j < this.lessons.length; j++) {
                             if (this.lessons[j].id == this.cart[i].cartId) {
-                                fetch('https://individualcw.herokuapp.com/collection/lesson/' + this.lessons[j].id, {
+                                fetch('https://cw2-individuals.herokuapp.com/collection/lessons/' + this.lessons[j].id, {
 
                                     method: 'PUT',
                                     headers: {
@@ -268,7 +268,7 @@
                     }
                 },
                 filteredList(){
-                    fetch('https://individualcw.herokuapp.com/collection/lesson/search?key_word=${this.search}')
+                    fetch('https://cw2-individuals.herokuapp.com/collection/lessons/search?key_word=${this.search}')
                     .then(response => {
                         return response.json()
                     })
