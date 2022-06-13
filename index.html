@@ -126,7 +126,7 @@
                                 <input v-model="user.number" type="number" class="form-control" placeholder="Enter Phone Number" required>
                             </div>
                             <div class="col-md-2">
-                                <input type="submit" class="btn btn-primary" @click="submit" value="Checkout">
+                                <input type="submit" class="btn btn-primary" @click="submit" v-on:click="submitForm" value="Checkout">
                             </div>
                         </div>
                     </div>
@@ -189,32 +189,33 @@
                 },
                 removeFromCart(lessons) {
                     if (confirm('You are about to delete this!')) {
-                        this.cart = [...this.cart].filter(item => item.cartId != lesson.cartId)
+                        // this.cart = [...this.cart].filter(item => item.id != lesson.id)
+                        for (let i = 0; i < this.cart.length; i++) {
+
+                            if (this.cart[i].subject === lessons.subject) {
+
+                                this.cart.splice(i, 1);
+
+                                lessons.Numberofspaces++;
+
+                                if (this.cart.length === 0) {
+
+                                    this.showProduct = true;
+                                }
+                                break;
+                            }
+                        }
+
+                        for (let i = 0; i < this.lessons.length; i++) {
+
+                            if (lessons.subject === this.lessons[i].subject) {
+
+                                let newSpace = this.lessons[i].Numberofspaces + 1
+                                this.lessons[i].Numberofspaces = newSpace
+                            }
+                        }
                     }
-                    // for (let i = 0; i < this.cart.length; i++) {
-
-                    //     if (this.cart[i].subject === lessons.subject) {
-
-                    //         this.cart.splice(i, 1);
-
-                    //         lessons.Numberofspaces++;
-
-                    //         if (this.cart.length === 0) {
-
-                    //             this.showProduct = true;
-                    //         }
-                    //         break;
-                    //     }
-                    // }
-
-                    // for (let i = 0; i < this.lessons.length; i++) {
-
-                    //     if (lessons.subject === this.lessons[i].subject) {
-
-                    //         let newSpace = this.lessons[i].Numberofspaces + 1
-                    //         this.lessons[i].Numberofspaces = newSpace
-                    //     }
-                    // }
+                    
                 },
                 showCheckout() {
                     this.showProduct = !this.showProduct;
@@ -244,6 +245,9 @@
                         console.log(error);
                     });
 
+                },
+                submitForm() {
+                    alert('Order Successful!');
                 },
                 putLesson() {
                     let upd_spaces = []
