@@ -84,30 +84,79 @@ app.post('/collection/:collectionName', (req, res, next) => {
 
 
 //UPDATE AN OBJECT BY ID
-app.put('/collection/:collectionName/:id', (req, res, next) => {
-    req.collection.updateOne(
-        {_id: new ObjectID(req.params.id)},
-        {$set: req.body},
-        {safe: true, multi: false},
+// app.put('/collection/:collectionName/:id', (req, res, next) => {
+//     req.collection.updateOne(
+//         {_id: new ObjectID(req.params.id)},
+//         {$set: req.body},
+//         {safe: true, multi: false},
+//         (error, result) => {
+//             if (error) return next(error)
+//             res.send((result.result.n === 1) ?
+//                 {msg: 'success'} : { msg: 'error'})
+//         })
+//         console.log(req.body)
+// })
+
+app.put('/collection/:collectionName/:id', (request, response, next) => {
+    request.collection.update(
+        { _id: new ObjectID(request.params.id) },
+        { $set: request.body },
+        { safe: true, multi: false },
         (error, result) => {
             if (error) return next(error)
-            res.send((result.result.n === 1) ?
-                {msg: 'success'} : { msg: 'error'})
+            response.send(result.acknowledged == true ? {msg: 'success'} : {msg: 'error'})
         })
-        console.log(req.body)
+})
+
+app.get('/search/:collectionName/:searchItem', (request, response, next) => {
+
+    request.collection.aggregate(
+
+        [{
+            $search: {
+                index: 'autoCompleteLessons',
+                compound: {
+                    should: [
+                        {
+                            "autocomplete": {
+                                query: request.params.searchItem,
+                                path: 'subject',
+                                "tokenOrder": "sequential"
+                            },
+                        },
+                        {
+                            "autocomplete": {
+                                query: request.params.searchItem,
+                                path: 'location',
+                                "tokenOrder": "sequential"
+                            },
+                        },
+                    ],
+                },
+            },
+        }]
+
+    ).toArray((error, results) => {
+        if (error) return next(error)
+        response.send(results)
+    })
 })
 
 // search
-app.get('/collection/:collectionName/search', (req, res, next) => {
-    let query_str = req.query.key_word
-    req.collection.find({}).toArray((e, results) => {
-        if (e) return next(e)
-        let newList = results.filter((lesson) => {
-            return lesson.subject.toLowerCase().match(query_str) || lesson.location.toLowerCase().match(query_str)
-        });
-        res.send(newList)
-    })
-})
+// app.get('/collection/:collectionName/search', (req, res, next) => {
+//     let query_str = req.query.key_word
+//     req.collection.find({}).toArray((e, results) => {
+//         if (e) return next(e)
+//         let newList = results.filter((lesson) => {
+//             return lesson.subject.toLowerCase().match(query_str) || lesson.location.toLowerCase().match(query_str)
+//         });
+//         res.send(newList)
+//     })
+// })
+
+
+
+
 
 app.use(function (req, res) {
     // Sets the status code to 404

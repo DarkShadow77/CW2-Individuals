@@ -59,12 +59,27 @@
                                 </div>
         
                                 <div class="col row d-flex justify-content-end">
-                                    <div class="col-8">
+                                    <!-- <div class="col-8">
                                         <input v-on:input="filteredList" class="form-control me-2" type="text" v-model="search" placeholder="Search">
                                     </div>
                                     <div class="col-1">
                                         <button class="btn btn-secondary"><i class="fa fa-search"></i></button>
+                                    </div>  -->
+
+                                    
+                                    <div class="col-8">
+                                        <input  class="form-control me-2" type="text" v-model="searchItem" placeholder="Search...">
+                                    </div>
+                                    <div class="col-1">
+                                        <button class="btn btn-secondary"><i class="fa fa-search"></i></button>
                                     </div> 
+
+                                    <input class="search" type="text" v-model="searchItem" placeholder="Search...">
+
+                            <button class="searchBtn">
+                                <span class="fas fa-search"></span>Search</button>
+
+
                                 </div>
 
                             </div>
@@ -95,7 +110,7 @@
                         <h4>Total Amount: {{total}}</h4>
                     </div>
                     
-                    <div class="col-md-2 pt-5" v-for="(item, index) in cart" :key="`cart--${index}`">
+                    <div class="col-md-3 pt-5" v-for="(item, index) in cart" :key="`cart--${index}`">
                         <div class="card bg-secondary text-white rounded">
                             <img v-bind:src="item.image" class="card-img-top" width="100dp" height="150dp">
                             <div class="card-body">
@@ -161,6 +176,18 @@
                 let result = await course.json()
                 this.lessons = result
             },
+            // created: function () {
+
+            //     fetch('https://cw2-individuals.herokuapp.com/collection/lessons').then(
+            //         function (response) {
+            //             response.json().then(
+            //                 function (json) {
+            //                     vueapp.lessons = json
+            //                 }
+            //             )
+            //         }
+            //     )
+            // },
             methods: {
                 addToCart(lesson) {
                     this.lessons.find(item => item.id == lesson.id).Numberofspaces -= 1;
@@ -221,14 +248,26 @@
                     this.showProduct = !this.showProduct;
                 },
                 submit() {
-                    
+
+                    lessonId = [];
+
+                    for (let i = 0; i < this.cart.length; i++) {
+
+                        lessonId.push({
+                            id: this.cart[i].id,
+                            Numberofspaces: 1
+                        }
+                        )
+                    }
+
                     let orders = {
-                        checkoutName: this.user.name,
-                        checkoutPhone: this.user.number,
-                        cartProduct: this.cart,
+                        name: this.user.name,
+                        phone_number: this.user.number,
+                        lessons: lessonId
                     }
 
                     fetch('https://cw2-individuals.herokuapp.com/collection/order', {
+
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -238,37 +277,56 @@
                         body: JSON.stringify(orders),
                     })
                     .then(response => response.json())
-                    .then(data => {
-                        this.putLesson()
-                    })
+                    
+                    this.putLesson()
+                    
                     .catch((error) => {
                         console.log(error);
                     });
+                        
+                    
+                    // let orders = {
+                    //     checkoutName: this.user.name,
+                    //     checkoutPhone: this.user.number,
+                    //     cartProduct: this.cart,
+                    // }
+
+                    // fetch('https://cw2-individuals.herokuapp.com/collection/order', {
+                    //     method: 'POST',
+                    //     headers: {
+                    //         'Content-Type': 'application/json',
+                    //     },
+                    //     mode: "cors",
+                    //     cache: "no-store",
+                    //     body: JSON.stringify(orders),
+                    // })
+                    // .then(response => response.json())
+                    // .then(data => {
+                    //     this.putLesson()
+                    // })
+                    // .catch((error) => {
+                    //     console.log(error);
+                    // });
 
                 },
                 submitForm() {
                     alert('Order Successful!');
                 },
                 putLesson() {
-                    let upd_spaces = []
                     for (let i = 0; i < this.cart.length; i++) {
 
-                        for (let j = 0; j < this.lessons.length; j++) {
-                            if (this.lessons[j].id == this.cart[i].cartId) {
-                                fetch('https://cw2-individuals.herokuapp.com/collection/lessons/' + this.lessons[j].id, {
+                        fetch('https://cw2-individuals.herokuapp.com/collection/lessons/' + this.cart[i].id, {
 
-                                    method: 'PUT',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        "Numberofspaces": this.lessons[j].Numberofspaces
-                                    }),
-                                })
-                                .then(response => response.json())
-                            }
-                            
-                        }
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                "Numberofspaces": this.cart[i].Numberofspaces - 1
+                            }),
+                        })
+                        .then(response => response.json())
+                           
                     }
                 },
                 filteredList(){
@@ -294,7 +352,6 @@
                 sortedLessons() {
                     let sortedLessons = this.lessons;
                     
-                    // Process search input
                     if (this.search != '' && this.search) {
                         sortedLessons = sortedLessons.filter((item) => {
                             return item.subject
@@ -342,7 +399,39 @@
 
                     return sortedLessons;
                 }
+            },
+
+            watch: {
+
+                searchItem: async function () {
+
+                    if (this.searchItem.length > 0) {
+
+                        await fetch('https://cw2-individuals.herokuapp.com/search/lessons/' + this.searchItem).then(
+                            function (response) {
+                                response.json().then(
+                                    function (json) {
+                                        vueapp.lessons = json
+                                    }
+                                )
+                            }
+                        )
+
+                    } else {
+
+                        fetch('https://cw2-individuals.herokuapp.com/collection/lessons').then(
+                            function (response) {
+                                response.json().then(
+                                    function (json) {
+                                        vueapp.lessons = json
+                                    }
+                                )
+                            }
+                        )
+                    }
+                }
             }
+
         });
     </script>
 </body>
